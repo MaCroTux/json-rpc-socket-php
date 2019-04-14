@@ -1,36 +1,29 @@
 <?php
 
-namespace JsonRpcServer;
+namespace SocketServer;
 
 use Closure;
 use Kraken\Ipc\Socket\SocketInterface;
 use Kraken\Ipc\Socket\SocketListener;
-use Kraken\Loop\Loop;
-use Kraken\Loop\Model\SelectLoop;
-use Kraken\Throwable\Exception\Logic\InstantiationException;
 
 class Server
 {
-    private const PROTOCOL  = 'tcp';
     /** @var SocketListener */
     private $server;
-    /** @var Loop */
-    private $loop;
-    /** @var JsonRpc */
-    private $jsonRpc;
+    /** @var ServerProtocol */
+    private $protocol;
+    /** @var null|string */
+    private $welcome;
 
-    public function __construct(string $address, string $port)
+    public function __construct(SocketListener $socketListener, ?string $welcome = null)
     {
-        $this->loop = new Loop(new SelectLoop);
+        $this->welcome = $welcome;
+        $this->server = $socketListener;
+    }
 
-        try {
-            $this->server = new SocketListener(
-                self::PROTOCOL . '://' . $address . ':'  .$port,
-                $this->loop
-            );
-        } catch (InstantiationException $e) {
-            die($e->getMessage());
-        }
+    public function server(): SocketListener
+    {
+        return $this->server;
     }
 
     public function addOnDataEvent(Closure $onData)
@@ -38,25 +31,18 @@ class Server
         $this->server->on(
             'connect',
             function(SocketListener $server, SocketInterface $client) use ($onData) {
-                $jsonRpm = $this->jsonRpc;
+
+                if ($this->welcome) {
+                    $client->write($this->welcome);
+                }
+
                 $client->on('data', $onData);
             }
         );
     }
 
-    public function start()
+    public function addProtocol(ServerProtocol $protocol)
     {
-        $server = $this->server;
-
-        $this->loop->onStart(function() use($server) {
-            $server->start();
-        });
-
-        $this->loop->start();
-    }
-
-    public function addJsonRpc(JsonRpc $jsonRpc)
-    {
-        $this->jsonRpc = $jsonRpc;
+        $this->protocol = $protocol;
     }
 }

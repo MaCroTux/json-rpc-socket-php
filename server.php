@@ -1,40 +1,67 @@
 <?php
 
-use JsonRpcServer\JsonRpc;
-use JsonRpcServer\JsonRpcRequest;
-use JsonRpcServer\Server;
-use JsonRpcServer\SubstractAction;
+use SocketServer\Socket;
 use Kraken\Ipc\Socket\SocketInterface;
+use SocketServer\JsonRpc\JsonRpcProtocol;
+use SocketServer\JsonRpc\JsonRpcRequest;
+use SocketServer\JsonRpc\SumCommand;
+use SocketServer\TelnetCommand\LsCommand;
+use SocketServer\TelnetCommand\TelnetProtocol;
 
 require_once 'vendor/autoload.php';
 
-const ADDRESS   = '127.0.0.1';
-const PORT      = '2080';
+const ADDRESS     = '127.0.0.1';
+const PORT_JSON   = '2080';
+const PORT_TELNET = '2081';
 
-$server = new Server(ADDRESS, PORT);
+$socket    = new Socket();
 
-$jsonRpc = new JsonRpc();
+// --------------------- JSON-RPC
 
-$jsonRpc->addAction(
-    SubstractAction::methodName(),
-    function($num1, $num2) {
-        return (new SubstractAction())->__invoke($num1, $num2);
-    }
-);
+$serverRpc = $socket->createServer(ADDRESS, PORT_JSON);
 
-$server->addJsonRpc($jsonRpc);
+$jsonRpc = new JsonRpcProtocol();
+$jsonRpc->addCommand(new SumCommand());
 
-$server->addOnDataEvent(
+$serverRpc->addProtocol($jsonRpc);
+
+$serverRpc->addOnDataEvent(
     function(SocketInterface $client, $data) use(&$buffer, $jsonRpc) {
-        echo $data;
+        echo "[".date(DATE_ISO8601, time())."]: ".$data."\n";
         try {
-            $jsonRpcRequest = JsonRpcRequest::buildFromJsonRequest($data);
+            $jsonRpcRequest = JsonRpcRequest::buildFromRequest($data);
 
-            $client->write($jsonRpc->executeAction($jsonRpcRequest));
+            $client->write($jsonRpc->executeCommand($jsonRpcRequest));
         } catch (\Exception $e) {
             $client->write($e->getMessage());
         }
     }
 );
 
-$server->start();
+// --------------------- TELNET COMMAND
+
+$telnetProtocol = new TelnetProtocol();
+$telnetProtocol->addCommand(new LsCommand());
+
+$serverTelnet = $socket->createServer(ADDRESS, PORT_TELNET, "Welcome to MaCroServer!\n\n$ ");
+
+$serverTelnet->addOnDataEvent(
+    function(SocketInterface $client, $data) use(&$buffer, $telnetProtocol) {
+        echo "[".date(DATE_ISO8601, time())."]: ".$data."\n";
+        try {
+            $client->write($telnetProtocol->executeCommand($data));
+        } catch (\Exception $e) {
+            $client->write($e->getMessage());
+        }
+    }
+);
+
+// --------------------- SERVER INIT
+
+$socket->addServers($serverRpc);
+$socket->addServers($serverTelnet);
+
+echo "* JSON-RPC server running on 2080, you execute for example 'nc 127.0.0.1 2080 < res.json'\n";
+echo "* TELNET server running on 2081, you execute for example 'nc 127.0.0.1 2081' and type 'ls'\n";
+
+$socket->start();

@@ -1,6 +1,6 @@
 <?php
 
-namespace JsonRpcServer;
+namespace SocketServer\JsonRpc;
 
 use Exception;
 
@@ -32,7 +32,7 @@ class JsonRpcRequest
      * @return JsonRpcRequest
      * @throws Exception
      */
-    public static function buildFromJsonRequest(string $json): self
+    public static function buildFromRequest(string $json):self
     {
         $decodeJson = self::validateRpcFormat($json);
 
@@ -53,7 +53,7 @@ class JsonRpcRequest
     {
         $formatJson = str_replace(["\n"],[''], $json);
 
-        return json_decode($formatJson, true);
+        return json_decode($formatJson, true) ?? [];
     }
 
     /**

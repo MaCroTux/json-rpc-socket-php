@@ -1,11 +1,10 @@
 {
     "require": {
-        "tivoka/tivoka": "^3.5",
         "dazzle-php/socket": "^0.4.1"
     },
     "autoload": {
         "psr-4": {
-            "JsonRpcServer\\": "src/"
+            "SocketServer\\": "src/"
         }
     }
 }

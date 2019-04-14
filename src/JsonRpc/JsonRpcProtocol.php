@@ -1,34 +1,28 @@
 <?php
 
-namespace JsonRpcServer;
+namespace SocketServer\JsonRpc;
 
 use Exception;
+use SocketServer\ServerProtocol;
 
-class JsonRpc
+class JsonRpcProtocol extends ServerProtocol
 {
-    /** @var array */
-    private $actions;
-
-    public function addAction(string $method, callable $class)
-    {
-        $this->actions[$method] = $class;
-    }
-
     /**
      * @param JsonRpcRequest $jsonRpcRequest
      * @return false|string
      * @throws Exception
      */
-    public function executeAction(JsonRpcRequest $jsonRpcRequest)
+    public function executeCommand($jsonRpcRequest): string
     {
         $params = $jsonRpcRequest->params();
 
         $this->validateMethod($jsonRpcRequest);
+        $command = $this->actions[$jsonRpcRequest->method()];
 
         return json_encode([
             'jsonrpc' => '2.0',
             'id' => $jsonRpcRequest->id(),
-            'result' => $this->actions[$jsonRpcRequest->method()](... $params)
+            'result' => (new $command())->__invoke(... $params)
         ]);
     }
 
