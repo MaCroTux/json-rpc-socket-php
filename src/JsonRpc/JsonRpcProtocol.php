@@ -3,17 +3,25 @@
 namespace SocketServer\JsonRpc;
 
 use Exception;
+use Kraken\Ipc\Socket\SocketInterface;
+use Kraken\Ipc\Socket\SocketListener;
 use SocketServer\ServerProtocol;
 
 class JsonRpcProtocol extends ServerProtocol
 {
+    public function onConnect(SocketListener $server, SocketInterface $client):void
+    {
+
+    }
+
     /**
-     * @param JsonRpcRequest $jsonRpcRequest
+     * @param string $data
      * @return false|string
      * @throws Exception
      */
-    public function executeCommand($jsonRpcRequest): string
+    public function executeCommand(string $data): string
     {
+        $jsonRpcRequest = JsonRpcRequest::buildFromRequest($data);
         $params = $jsonRpcRequest->params();
 
         $this->validateMethod($jsonRpcRequest);

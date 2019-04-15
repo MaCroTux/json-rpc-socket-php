@@ -6,7 +6,7 @@ use SocketServer\Command;
 
 class LsCommand implements Command
 {
-    public function __invoke()
+    public function __invoke(): string
     {
         return exec('ls');
     }

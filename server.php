@@ -1,16 +1,14 @@
 <?php
 
 use SocketServer\Socket;
-use Kraken\Ipc\Socket\SocketInterface;
 use SocketServer\JsonRpc\JsonRpcProtocol;
-use SocketServer\JsonRpc\JsonRpcRequest;
 use SocketServer\JsonRpc\SumCommand;
 use SocketServer\TelnetCommand\LsCommand;
 use SocketServer\TelnetCommand\TelnetProtocol;
 
 require_once 'vendor/autoload.php';
 
-const ADDRESS     = '127.0.0.1';
+const ADDRESS     = '0.0.0.0';
 const PORT_JSON   = '2080';
 const PORT_TELNET = '2081';
 
@@ -18,43 +16,21 @@ $socket    = new Socket();
 
 // --------------------- JSON-RPC
 
+$jsonRpcProtocol = new JsonRpcProtocol();
+$jsonRpcProtocol->addCommand(new SumCommand());
+
 $serverRpc = $socket->createServer(ADDRESS, PORT_JSON);
 
-$jsonRpc = new JsonRpcProtocol();
-$jsonRpc->addCommand(new SumCommand());
-
-$serverRpc->addProtocol($jsonRpc);
-
-$serverRpc->addOnDataEvent(
-    function(SocketInterface $client, $data) use(&$buffer, $jsonRpc) {
-        echo "[".date(DATE_ISO8601, time())."]: ".$data."\n";
-        try {
-            $jsonRpcRequest = JsonRpcRequest::buildFromRequest($data);
-
-            $client->write($jsonRpc->executeCommand($jsonRpcRequest));
-        } catch (\Exception $e) {
-            $client->write($e->getMessage());
-        }
-    }
-);
+$serverRpc->addProtocol($jsonRpcProtocol);
 
 // --------------------- TELNET COMMAND
 
-$telnetProtocol = new TelnetProtocol();
+$telnetProtocol = new TelnetProtocol('pass');
 $telnetProtocol->addCommand(new LsCommand());
 
-$serverTelnet = $socket->createServer(ADDRESS, PORT_TELNET, "Welcome to MaCroServer!\n\n$ ");
+$serverTelnet = $socket->createServer(ADDRESS, PORT_TELNET);
 
-$serverTelnet->addOnDataEvent(
-    function(SocketInterface $client, $data) use(&$buffer, $telnetProtocol) {
-        echo "[".date(DATE_ISO8601, time())."]: ".$data."\n";
-        try {
-            $client->write($telnetProtocol->executeCommand($data));
-        } catch (\Exception $e) {
-            $client->write($e->getMessage());
-        }
-    }
-);
+$serverTelnet->addProtocol($telnetProtocol);
 
 // --------------------- SERVER INIT
 

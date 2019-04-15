@@ -28,8 +28,7 @@ class Socket
 
     public function createServer(
         string $address,
-        string $port,
-        ?string $welcome = null
+        string $port
     ): Server {
         try {
             $socketListener = new SocketListener(
@@ -37,7 +36,7 @@ class Socket
                 $this->loop
             );
 
-            return new Server($socketListener, $welcome);
+            return new Server($socketListener);
         } catch (InstantiationException $e) {
             die($e->getMessage());
         }
