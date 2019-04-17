@@ -101,21 +101,23 @@ class Server
         $client
             ->getLoop()
             ->onTick(function() use ($client) {
-                printf("%s\n", str_repeat('-', 42));
-                printf("%s\n", 'Client info:');
-                printf("%s\n", str_repeat('-', 42));
-                printf("%-20s%s\n", 'Resource ID:', '#' . $client->getResourceId());
-                printf("%-20s%s\n", 'Local endpoint:', $client->getLocalEndpoint());
-                printf("%-20s%s\n", 'Local protocol:', $client->getLocalProtocol());
-                printf("%-20s%s\n", 'Local address:', $client->getLocalAddress());
-                printf("%-20s%s\n", 'Local host:', $client->getLocalHost());
-                printf("%-20s%s\n", 'Local port:', $client->getLocalPort());
-                printf("%-20s%s\n", 'Remote endpoint:', $client->getRemoteEndpoint());
-                printf("%-20s%s\n", 'Remote protocol:', $client->getRemoteProtocol());
-                printf("%-20s%s\n", 'Remote address:', $client->getRemoteAddress());
-                printf("%-20s%s\n", 'Remote host:', $client->getRemoteHost());
-                printf("%-20s%s\n", 'Remote port:', $client->getRemotePort());
-                printf("%s\n", str_repeat('-', 42));
+                $info = sprintf("%s\n", str_repeat('-', 42));
+                $info .= sprintf("%s\n", 'Client info:');
+                $info .= sprintf("%s\n", str_repeat('-', 42));
+                $info .= sprintf("%-20s%s\n", 'Resource ID:', '#' . $client->getResourceId());
+                $info .= sprintf("%-20s%s\n", 'Local endpoint:', $client->getLocalEndpoint());
+                $info .= sprintf("%-20s%s\n", 'Local protocol:', $client->getLocalProtocol());
+                $info .= sprintf("%-20s%s\n", 'Local address:', $client->getLocalAddress());
+                $info .= sprintf("%-20s%s\n", 'Local host:', $client->getLocalHost());
+                $info .= sprintf("%-20s%s\n", 'Local port:', $client->getLocalPort());
+                $info .= sprintf("%-20s%s\n", 'Remote endpoint:', $client->getRemoteEndpoint());
+                $info .= sprintf("%-20s%s\n", 'Remote protocol:', $client->getRemoteProtocol());
+                $info .= sprintf("%-20s%s\n", 'Remote address:', $client->getRemoteAddress());
+                $info .= sprintf("%-20s%s\n", 'Remote host:', $client->getRemoteHost());
+                $info .= sprintf("%-20s%s\n", 'Remote port:', $client->getRemotePort());
+                $info .= sprintf("%s\n", str_repeat('-', 42));
+
+                $client->write($info);
             });
     }
 
