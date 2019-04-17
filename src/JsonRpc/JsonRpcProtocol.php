@@ -9,29 +9,9 @@ use SocketServer\ServerProtocol;
 
 class JsonRpcProtocol extends ServerProtocol
 {
-    public function onConnect(SocketListener $server, SocketInterface $client):void
+    public function onConnect(SocketInterface $client):void
     {
 
-    }
-
-    /**
-     * @param string $data
-     * @return false|string
-     * @throws Exception
-     */
-    public function executeCommand(string $data): string
-    {
-        $jsonRpcRequest = JsonRpcRequest::buildFromRequest($data);
-        $params = $jsonRpcRequest->params();
-
-        $this->validateMethod($jsonRpcRequest);
-        $command = $this->actions[$jsonRpcRequest->method()];
-
-        return json_encode([
-            'jsonrpc' => '2.0',
-            'id' => $jsonRpcRequest->id(),
-            'result' => (new $command())->__invoke(... $params)
-        ]);
     }
 
     /**
@@ -61,5 +41,28 @@ class JsonRpcProtocol extends ServerProtocol
                 ])
             );
         }
+    }
+
+    /**
+     * @param SocketInterface $client
+     * @param string $data
+     * @return false|string
+     * @throws Exception
+     */
+    public function executeCommand(
+        SocketInterface $client,
+        string $data
+    ): string {
+        $jsonRpcRequest = JsonRpcRequest::buildFromRequest($data);
+        $params = $jsonRpcRequest->params();
+
+        $this->validateMethod($jsonRpcRequest);
+        $command = $this->actions[$jsonRpcRequest->method()];
+
+        return json_encode([
+            'jsonrpc' => '2.0',
+            'id' => $jsonRpcRequest->id(),
+            'result' => (new $command())->__invoke(... $params)
+        ]);
     }
 }

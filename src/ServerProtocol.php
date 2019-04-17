@@ -3,7 +3,6 @@
 namespace SocketServer;
 
 use Kraken\Ipc\Socket\SocketInterface;
-use Kraken\Ipc\Socket\SocketListener;
 
 abstract class ServerProtocol
 {
@@ -16,17 +15,19 @@ abstract class ServerProtocol
     }
 
     /**
-     * @param SocketListener $server
      * @param SocketInterface $client
      */
     abstract public function onConnect(
-        SocketListener $server,
         SocketInterface $client
     ):void;
 
     /**
-     * @param $data
+     * @param SocketInterface $client
+     * @param string $data
      * @return false|string
      */
-    abstract public function executeCommand(string $data): string;
+    abstract public function executeCommand(
+        SocketInterface $client,
+        string $data
+    ): string;
 }

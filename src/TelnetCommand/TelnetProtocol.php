@@ -3,7 +3,7 @@
 namespace SocketServer\TelnetCommand;
 
 use Kraken\Ipc\Socket\SocketInterface;
-use Kraken\Ipc\Socket\SocketListener;
+use SocketServer\Server;
 use SocketServer\ServerProtocol;
 
 class TelnetProtocol extends ServerProtocol
@@ -16,29 +16,37 @@ class TelnetProtocol extends ServerProtocol
     private $protect = false;
     /** @var string */
     private $password;
+    /** @var Server */
+    private $server;
 
-    public function __construct(?string $password = null)
+    public function __construct(Server $server, ?string $password = null)
     {
         if ($password !== null) {
             $this->protect = true;
             $this->password = $password;
         }
+        $this->server = $server;
     }
 
-    public function onConnect(SocketListener $server, SocketInterface $client):void
+    public function onConnect(SocketInterface $client):void
     {
+        $clientId = $client->getResourceId();
         if ($this->protect === true) {
             $client->write(self::PASSWORD.": ");
         } else {
-            $client->write(self::WELCOME."\n\n$ ");
+            $client->write(self::WELCOME."(".$clientId.")\n\n$ ");
         }
     }
 
     /**
+     * @param SocketInterface $client
      * @param string $data
      * @return false|string
      */
-    public function executeCommand(string $data): string
+    public function executeCommand(
+        SocketInterface $client,
+        string $data
+    ): string
     {
         $command = str_replace(["\n","\r"],['',''], $data);
 
@@ -46,7 +54,21 @@ class TelnetProtocol extends ServerProtocol
             return self::PASSWORD.": ";
         } else if ($this->protect === true && $command === $this->password) {
             $this->protect = false;
-            return self::PASSWORD_OK . "\n\n" . self::WELCOME . "\n\n$ ";
+            return self::PASSWORD_OK . "\n\n" .
+                self::WELCOME . "\n\n$ ";
+        }
+
+        if ($command === '\\info') {
+            $this->server->info($client);
+            return '';
+        }
+
+        if ($command === '\\exit') {
+            if ($this->password !== null) {
+                $this->protect = true;
+            }
+            $this->server->deleteSession($client->getResourceId());
+            $client->stop();
         }
 
         if ($this->protect === true) {
