@@ -46,8 +46,7 @@ class TelnetProtocol extends ServerProtocol
     public function executeCommand(
         SocketInterface $client,
         string $data
-    ): string
-    {
+    ): string {
         $command = str_replace(["\n","\r"],['',''], $data);
 
         if ($this->protect === true && $command !== $this->password) {
@@ -67,8 +66,7 @@ class TelnetProtocol extends ServerProtocol
             if ($this->password !== null) {
                 $this->protect = true;
             }
-            $this->server->deleteSession($client->getResourceId());
-            $client->stop();
+            $this->server->closeClientConnection($client);
         }
 
         if ($this->protect === true) {

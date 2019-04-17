@@ -45,7 +45,11 @@ class Server
             function(SocketInterface $client, $data) use(&$buffer) {
                 $clientId = $client->getResourceId();
 
-                $this->logData($client, $data);
+                $client
+                    ->getLoop()
+                    ->onTick(function() use ($client, $data) {
+                        $this->logData($client, $data);
+                    });
 
                 try {
                     $session = $this->startSession($clientId);
@@ -81,28 +85,38 @@ class Server
         $this->protocol = $protocol;
     }
 
-    public function deleteSession(int $getResourceId): void
+    public function closeClientConnection(SocketInterface $client): void
     {
-        unset($this->clientConnection[$getResourceId]);
+        $client
+            ->getLoop()
+            ->onTick(function() use ($client) {
+                $getResourceId = $client->getResourceId();
+                unset($this->clientConnection[$getResourceId]);
+                $client->stop();
+            });
     }
 
-    public function info($client)
+    public function info(SocketInterface $client)
     {
-        printf("%s\n", str_repeat('-', 42));
-        printf("%s\n", 'Client info:');
-        printf("%s\n", str_repeat('-', 42));
-        printf("%-20s%s\n", 'Resource ID:', '#' . $client->getResourceId());
-        printf("%-20s%s\n", 'Local endpoint:', $client->getLocalEndpoint());
-        printf("%-20s%s\n", 'Local protocol:', $client->getLocalProtocol());
-        printf("%-20s%s\n", 'Local address:', $client->getLocalAddress());
-        printf("%-20s%s\n", 'Local host:', $client->getLocalHost());
-        printf("%-20s%s\n", 'Local port:', $client->getLocalPort());
-        printf("%-20s%s\n", 'Remote endpoint:', $client->getRemoteEndpoint());
-        printf("%-20s%s\n", 'Remote protocol:', $client->getRemoteProtocol());
-        printf("%-20s%s\n", 'Remote address:', $client->getRemoteAddress());
-        printf("%-20s%s\n", 'Remote host:', $client->getRemoteHost());
-        printf("%-20s%s\n", 'Remote port:', $client->getRemotePort());
-        printf("%s\n", str_repeat('-', 42));
+        $client
+            ->getLoop()
+            ->onTick(function() use ($client) {
+                printf("%s\n", str_repeat('-', 42));
+                printf("%s\n", 'Client info:');
+                printf("%s\n", str_repeat('-', 42));
+                printf("%-20s%s\n", 'Resource ID:', '#' . $client->getResourceId());
+                printf("%-20s%s\n", 'Local endpoint:', $client->getLocalEndpoint());
+                printf("%-20s%s\n", 'Local protocol:', $client->getLocalProtocol());
+                printf("%-20s%s\n", 'Local address:', $client->getLocalAddress());
+                printf("%-20s%s\n", 'Local host:', $client->getLocalHost());
+                printf("%-20s%s\n", 'Local port:', $client->getLocalPort());
+                printf("%-20s%s\n", 'Remote endpoint:', $client->getRemoteEndpoint());
+                printf("%-20s%s\n", 'Remote protocol:', $client->getRemoteProtocol());
+                printf("%-20s%s\n", 'Remote address:', $client->getRemoteAddress());
+                printf("%-20s%s\n", 'Remote host:', $client->getRemoteHost());
+                printf("%-20s%s\n", 'Remote port:', $client->getRemotePort());
+                printf("%s\n", str_repeat('-', 42));
+            });
     }
 
     /**
