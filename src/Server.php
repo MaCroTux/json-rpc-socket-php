@@ -31,10 +31,6 @@ class Server
         $this->server->on(
             'connect',
             function(SocketListener $server, SocketInterface $client) {
-                /*$clientConnection[$client->getResourceId()] = [
-                    'client' => $client,
-                    'server' => $this->server,
-                ];*/
                 $this->server = $server;
                 $this->protocol->onConnect($client);
 				$this->onDataEvent($client);
