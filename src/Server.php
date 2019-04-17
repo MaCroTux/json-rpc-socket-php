@@ -118,10 +118,9 @@ class Server
         $date     = date('d-m-y H:i:s', time());
         $ip       = $client->getRemoteAddress();
         $clientId = $client->getResourceId();
+        $data = trim($data);
 
-        if (mb_detect_encoding($data, 'ASCII')) {
-            $data = trim($data);
-        } else {
+        if (!mb_detect_encoding(trim($data), 'ASCII')) {
             $data = bin2hex($data);
         }
 
