@@ -109,12 +109,21 @@ class Server
         printf("%s\n", str_repeat('-', 42));
     }
 
+    /**
+     * @param SocketInterface $client
+     * @param $data
+     */
     private function logData(SocketInterface $client, $data):void
     {
         $date     = date('d-m-y H:i:s', time());
         $ip       = $client->getRemoteAddress();
         $clientId = $client->getResourceId();
-        $data = trim($data);
+
+        if (mb_detect_encoding($data, 'ASCII')) {
+            $data = trim($data);
+        } else {
+            $data = bin2hex($data);
+        }
 
         $log = "[{$date}/{$ip}/#{$clientId}]: {$data}\n";
         file_put_contents('server.log',$log, FILE_APPEND);
