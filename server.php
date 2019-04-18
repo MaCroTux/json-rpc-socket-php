@@ -1,5 +1,6 @@
 <?php
 
+use SocketServer\Config;
 use SocketServer\Socket;
 use SocketServer\JsonRpc\JsonRpcProtocol;
 use SocketServer\JsonRpc\SumCommand;
@@ -11,6 +12,7 @@ require_once 'vendor/autoload.php';
 const ADDRESS     = '0.0.0.0';
 const PORT_JSON   = '2080';
 const PORT_TELNET = '2081';
+const TELNET_CONF = 'telnet_config.json';
 
 $socket    = new Socket();
 
@@ -27,7 +29,11 @@ $serverRpc->setProtocol($jsonRpcProtocol);
 
 $serverTelnet = $socket->createServer(ADDRESS, PORT_TELNET);
 
-$telnetProtocol = new TelnetProtocol($serverTelnet, 'pass');
+$telnetProtocol = new TelnetProtocol(
+    $serverTelnet,
+    new Config(TELNET_CONF)
+);
+
 $telnetProtocol->addCommand(new BashCommand('bash_alias_command.json'));
 
 $serverTelnet->setProtocol($telnetProtocol);

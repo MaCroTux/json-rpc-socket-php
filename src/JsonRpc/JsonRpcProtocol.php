@@ -53,6 +53,7 @@ class JsonRpcProtocol extends ServerProtocol
         SocketInterface $client,
         string $data
     ): string {
+        $this->client = $client;
         $jsonRpcRequest = JsonRpcRequest::buildFromRequest($data);
         $params = $jsonRpcRequest->params();
 

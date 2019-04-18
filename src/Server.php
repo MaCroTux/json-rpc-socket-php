@@ -2,10 +2,8 @@
 
 namespace SocketServer;
 
-use Closure;
 use Kraken\Ipc\Socket\SocketInterface;
 use Kraken\Ipc\Socket\SocketListener;
-use WebSocket\Client;
 
 class Server
 {
@@ -119,6 +117,50 @@ class Server
 
                 $client->write($info);
             });
+    }
+
+    public function closeConnect(int $connectId) {
+        /** @var ServerProtocol $protocol */
+        $protocol = $this->clientConnection[$connectId];
+        /** @var SocketInterface $userClient */
+        $userClient = $protocol->client()['client'];
+        $userClient->close();
+        unset($this->clientConnection[$connectId]);
+    }
+
+    public function usersInfo(SocketInterface $client)
+    {
+        $numClients = count($this->clientConnection);
+        $info = '';
+        $info .= sprintf("\n%-20s%s\n", 'Client connect:', $numClients);
+
+        $info .= sprintf(
+            "\n%-10s%-10s%s\n",
+            'Connect',
+            'Client id',
+            'Port'
+        );
+
+        $info .= sprintf(
+            "%-10s%-10s%s\n",
+            str_repeat('-',9),
+            str_repeat('-',9),
+            str_repeat('-',9)
+        );
+
+        /** @var ServerProtocol $protocol */
+        foreach ($this->clientConnection as $protocol) {
+            $userClient = $protocol->client();
+
+            $info .= sprintf(
+                "%-10s%-10s%s\n",
+                $userClient['isOpen'] === true ? 'Open' : 'Closed',
+                $userClient['clientId'],
+                $userClient['port']
+            );
+        }
+
+        $client->write($info."\n");
     }
 
     /**

@@ -8,10 +8,22 @@ abstract class ServerProtocol
 {
     /** @var array */
     protected $actions;
+    /** @var SocketInterface */
+    protected $client;
 
     public function addCommand(Command $command)
     {
         $this->actions[$command->methodName()] = $command;
+    }
+
+    public function client(): array
+    {
+        return [
+            'isOpen'   => $this->client->isOpen(),
+            'clientId' => $this->client->getResourceId(),
+            'port'     => $this->client->getLocalPort(),
+            'client'   => $this->client,
+        ];
     }
 
     /**
