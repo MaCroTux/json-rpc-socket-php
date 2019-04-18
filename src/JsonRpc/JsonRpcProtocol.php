@@ -62,7 +62,7 @@ class JsonRpcProtocol extends ServerProtocol
         return json_encode([
             'jsonrpc' => '2.0',
             'id' => $jsonRpcRequest->id(),
-            'result' => (new $command())->__invoke(... $params)
+            'result' => (new $command())->__invoke($client, ... $params)
         ]);
     }
 }

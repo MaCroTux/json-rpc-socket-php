@@ -3,6 +3,7 @@
 namespace SocketServer\TelnetCommand;
 
 use Kraken\Ipc\Socket\SocketInterface;
+use SocketServer\Command;
 use SocketServer\Server;
 use SocketServer\ServerProtocol;
 
@@ -77,13 +78,31 @@ class TelnetProtocol extends ServerProtocol
             return $this->write('');
         }
 
-        if (empty($this->actions[$command])) {
+        $action = $this->searchCommandCorrect(
+            $this->actions,
+            $command
+        );
+
+        if ($action === null) {
             return $this->write('Not found');
         }
 
-        $command = $this->actions[$command];
+        return $this->write(
+            $action->__invoke($client, $command)
+        );
+    }
 
-        return $this->write($command->__invoke());
+    private function searchCommandCorrect(
+        array $actions,
+        string $command
+    ): ?Command {
+        foreach ($actions as $action) {
+            if ($action->matchData($command)) {
+                return $action;
+            }
+        }
+
+        return null;
     }
 
     private function write(string $line): string

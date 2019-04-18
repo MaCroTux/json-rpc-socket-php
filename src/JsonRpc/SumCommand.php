@@ -2,6 +2,7 @@
 
 namespace SocketServer\JsonRpc;
 
+use Kraken\Ipc\Socket\SocketInterface;
 use SocketServer\Command;
 
 class SumCommand implements Command
@@ -11,8 +12,11 @@ class SumCommand implements Command
         return 'sum';
     }
 
-    public function __invoke($num1, $num2): string
-    {
+    public function __invoke(
+        SocketInterface $client,
+        $num1,
+        $num2
+    ): string {
         return (string)($num1 + $num2);
     }
 }
