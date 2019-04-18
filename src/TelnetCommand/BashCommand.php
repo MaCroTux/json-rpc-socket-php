@@ -37,12 +37,13 @@ class BashCommand implements Command
         $args    = explode(' ', $data);
         $command = array_shift($args);
 
-        if (empty($this->commands[$command])) {
-            return 'Command not found';
-        }
-
         if ($command === 'reload') {
             $this->loadCommandFile($this->commandFiles);
+            return "Reload config file";
+        }
+
+        if (empty($this->commands[$command])) {
+            return 'Command not found';
         }
 
         $exec = $this->commands[$command];
