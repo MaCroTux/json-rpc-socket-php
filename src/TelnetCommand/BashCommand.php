@@ -9,8 +9,16 @@ class BashCommand implements Command
 {
     /** @var array */
     private $commands;
+    /** @var string */
+    private $commandFiles;
 
     public function __construct(string $commandFiles)
+    {
+        $this->commandFiles = $commandFiles;
+        $this->loadCommandFile($commandFiles);
+    }
+
+    private function loadCommandFile($commandFiles): void
     {
         $dataFile = file_get_contents($commandFiles);
         $this->commands = json_decode($dataFile, true);
@@ -31,6 +39,10 @@ class BashCommand implements Command
 
         if (empty($this->commands[$command])) {
             return 'Command not found';
+        }
+
+        if ($command === 'reload') {
+            $this->loadCommandFile($this->commandFiles);
         }
 
         $exec = $this->commands[$command];
