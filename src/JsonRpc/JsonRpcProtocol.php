@@ -5,13 +5,57 @@ namespace SocketServer\JsonRpc;
 use Exception;
 use Kraken\Ipc\Socket\SocketInterface;
 use Kraken\Ipc\Socket\SocketListener;
+use SocketServer\Connection;
+use SocketServer\Listener;
 use SocketServer\ServerProtocol;
 
 class JsonRpcProtocol extends ServerProtocol
 {
-    public function onConnect(SocketInterface $client):void
+    public function onConnect(SocketListener $server, SocketInterface $client):void
     {
+    }
 
+    public function onData(Connection $connection, string $query): void
+    {
+        $client = $connection->client();
+        try {
+            $response = $this->executeCommand($connection, $query);
+
+            $client
+                ->getLoop()
+                ->onTick(function() use ($client, $query, $response) {
+                    $this->logData($client, $query, $response);
+                });
+
+            $client->write($response);
+        } catch (\Exception $e) {
+            $client->write($e->getMessage());
+        }
+    }
+
+    /**
+     * @param Connection $connection
+     * @param string $data
+     * @return false|string
+     * @throws Exception
+     */
+    public function executeCommand(
+        Connection $connection,
+        string $data
+    ): string {
+        $client = $connection->client();
+
+        $jsonRpcRequest = JsonRpcRequest::buildFromRequest($data);
+        $params = $jsonRpcRequest->params();
+
+        $this->validateMethod($jsonRpcRequest);
+        $command = $this->actions[$jsonRpcRequest->method()];
+
+        return json_encode([
+            'jsonrpc' => '2.0',
+            'id' => $jsonRpcRequest->id(),
+            'result' => (new $command())->__invoke($client, ... $params)
+        ]);
     }
 
     /**
@@ -41,29 +85,5 @@ class JsonRpcProtocol extends ServerProtocol
                 ])
             );
         }
-    }
-
-    /**
-     * @param SocketInterface $client
-     * @param string $data
-     * @return false|string
-     * @throws Exception
-     */
-    public function executeCommand(
-        SocketInterface $client,
-        string $data
-    ): string {
-        $this->client = $client;
-        $jsonRpcRequest = JsonRpcRequest::buildFromRequest($data);
-        $params = $jsonRpcRequest->params();
-
-        $this->validateMethod($jsonRpcRequest);
-        $command = $this->actions[$jsonRpcRequest->method()];
-
-        return json_encode([
-            'jsonrpc' => '2.0',
-            'id' => $jsonRpcRequest->id(),
-            'result' => (new $command())->__invoke($client, ... $params)
-        ]);
     }
 }

@@ -9,41 +9,76 @@ use Kraken\Throwable\Exception\Logic\InstantiationException;
 
 class Socket
 {
-    private const PROTOCOL  = 'tcp';
+    private const PROTOCOL = 'tcp';
 
-    /** @var Loop  */
+    /** @var Loop */
     private $loop;
+    /** @var ServerProtocol */
+    private $protocol;
+    /** @var SocketConfig */
+    private $socketConfig;
 
-    public function __construct()
-    {
-        $this->loop = new Loop(new SelectLoop);
+    public function __construct(
+        Loop $loop,
+        ServerProtocol $protocol,
+        SocketConfig $socketConfig
+    ) {
+        $this->loop         = $loop;
+        $this->protocol     = $protocol;
+        $this->socketConfig = $socketConfig;
     }
 
-    public function addServers(Server $server)
+    public static function createLoop(): Loop
     {
-        $this->loop->onStart(function() use($server) {
-            $server->server()->start();
-        });
+        return new Loop(new SelectLoop);
     }
 
-    public function createServer(
+    public static function buildFromProtocolAndAddress(
+        Loop $loop,
+        ServerProtocol $protocol,
         string $address,
         string $port
-    ): Server {
-        try {
-            $socketListener = new SocketListener(
-                self::PROTOCOL . '://' . $address . ':' . $port,
-                $this->loop
-            );
+    ): self {
+        return new self(
+            $loop,
+            $protocol,
+            SocketConfig::buildFromAddress($address, $port)
+        );
+    }
 
-            return new Server($socketListener);
+    /**
+     * @return Listener
+     * @throws InstantiationException
+     */
+    public function listener(): Listener
+    {
+        try {
+            return new Listener(
+                new SocketListener(
+                    $this->endpoint(),
+                    $this->loop
+                ),
+                $this->protocol
+            );
         } catch (InstantiationException $e) {
-            die($e->getMessage());
+            throw $e;
         }
     }
 
-    public function start()
+    public function endpoint(): string
     {
-        $this->loop->start();
+        return self::PROTOCOL . '://' .
+            $this->socketConfig->address() . ':' .
+            $this->socketConfig->port();
+    }
+
+    public function port(): int
+    {
+        return $this->socketConfig->port();
+    }
+
+    public function loop(): Loop
+    {
+        return $this->loop;
     }
 }
