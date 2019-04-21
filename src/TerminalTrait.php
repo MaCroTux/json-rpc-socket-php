@@ -4,19 +4,21 @@ namespace SocketServer;
 
 trait TerminalTrait
 {
+    private $internalCommandList = [
+        '\\help'        => 'Show command list',
+        '\\info'        => 'Show socket info',
+        '\\exit'        => 'Close session',
+        '\\users'       => 'Show users list connect',
+        '\\change_pass' => 'Protect or change terminal password',
+    ];
+
     public function terminalCommandExtend(
         Connection $connection,
         string $query,
         ?Config $config = null
     ): ?string {
 
-        $commands = [
-            '\\info',
-            '\\exit',
-            '\\users',
-            '\\change_pass',
-            '\\help',
-        ];
+        $commands = array_keys($this->internalCommandList);
 
         if (!in_array($query, $commands)) {
             return null;
@@ -145,6 +147,14 @@ trait TerminalTrait
             str_repeat('-',14),
             str_repeat('-',30)
         );
+
+        foreach ($this->internalCommandList as $internalCommand=>$description) {
+            $commandList .= sprintf(
+                "%-15s%s\n",
+                $internalCommand,
+                $description
+            );
+        }
 
         /** @var Command $command */
         foreach ($commands as $command) {

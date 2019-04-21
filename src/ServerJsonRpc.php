@@ -7,7 +7,7 @@ use SocketServer\JsonRpc\TerminalProtocol;
 
 class ServerJsonRpc extends Server
 {
-    private const TELNET_CONF = 'telnet_config.json';
+    private const TERMINAL_CONF = 'terminal_config.json';
 
     /**
      * @param int $rpcPort
@@ -30,7 +30,7 @@ class ServerJsonRpc extends Server
         );
 
         if ($terminalPort !== null) {
-            $terminalConfig = new Config(self::TELNET_CONF);
+            $terminalConfig = new Config(self::TERMINAL_CONF);
             $terminalProtocol = new TerminalProtocol($terminalConfig);
             self::loadCommands($terminalProtocol, $commands);
             $server->addCustomServerWithProtocolAndPort($terminalProtocol, $terminalPort);

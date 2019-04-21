@@ -27,9 +27,9 @@ try {
 
 // --------------------- CUSTOM SERVER TELNET
 
-const TELNET_CONF = 'telnet_config.json';
+const TERMINAL_CONF = 'terminal_config.json';
 
-$telnetProtocol = new TelnetProtocol(new Config(TELNET_CONF));
+$telnetProtocol = new TelnetProtocol(new Config(TERMINAL_CONF));
 $telnetProtocol->addCommand(new BashCommand('bash_alias_command.json'));
 
 try {
