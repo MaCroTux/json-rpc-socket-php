@@ -2,8 +2,7 @@
     "require": {
         "dazzle-php/socket": "^0.4.1",
         "ext-json": "*",
-        "ext-mbstring": "*",
-        "ext-yaml": "*"
+        "ext-mbstring": "*"
     },
     "autoload": {
         "psr-4": {

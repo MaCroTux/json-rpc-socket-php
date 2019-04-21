@@ -4,4 +4,4 @@ WORKDIR /usr/src/myapp
 
 RUN docker-php-ext-install mbstring
 
-CMD [ "php", "./server.php" ]
+CMD [ "php", "./example/server.php" ]
