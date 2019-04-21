@@ -39,7 +39,7 @@ try {
 }
 
 echo "* JSON-RPC server running on 2080, you execute for example 'nc 127.0.0.1 2080 < res.json'\n";
-echo "* TERMINAL server running on 2081, you execute for example 'nc 127.0.0.1 2081' and type 'ls'\n\n\n";
-echo "* CUSTOM TELNET server running on 2024, you execute for example 'nc 127.0.0.1 2024' and type 'sum 1 2'\n\n\n";
+echo "* TERMINAL server running on 2081, you execute for example 'nc 127.0.0.1 2081' and type 'sum 1 2'\n\n\n";
+echo "* CUSTOM TELNET server running on 2024, you execute for example 'nc 127.0.0.1 2024' and type '.h'\n\n\n";
 
 $server->start();
