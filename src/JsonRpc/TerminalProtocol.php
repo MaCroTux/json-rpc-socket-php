@@ -1,16 +1,18 @@
 <?php
 
-namespace SocketServer\TelnetCommand;
+namespace SocketServer\JsonRpc;
 
 use Kraken\Ipc\Socket\SocketInterface;
 use Kraken\Ipc\Socket\SocketListener;
-use SocketServer\Command;
 use SocketServer\Config;
 use SocketServer\Connection;
 use SocketServer\ServerProtocol;
+use SocketServer\TerminalTrait;
 
-class TelnetProtocol extends ServerProtocol
+class TerminalProtocol extends ServerProtocol
 {
+    use TerminalTrait;
+
     private const PASSWORD = "Password";
     private const PASSWORD_OK = "Password correct";
 
@@ -66,16 +68,15 @@ class TelnetProtocol extends ServerProtocol
         Connection $connection,
         string $query
     ): void {
-        var_dump('#'.$connection->id());
         $client  = $connection->client();
-        $command = $this->cleanString($query);
+        $cleanQuery = $this->cleanString($query);
 
         try {
-            if ($this->protect === true && $command !== $this->password) {
+            if ($this->protect === true && $cleanQuery !== $this->password) {
                 $client->write(self::PASSWORD.": ");
 
                 return;
-            } else if ($this->protect === true && $command === $this->password) {
+            } else if ($this->protect === true && $cleanQuery === $this->password) {
                 $this->protect = false;
                 $client->write(
                     self::PASSWORD_OK .
@@ -90,7 +91,7 @@ class TelnetProtocol extends ServerProtocol
 
             $response = $this->executeCommand(
                 $connection,
-                $command
+                $cleanQuery
             );
 
             $client
@@ -107,81 +108,55 @@ class TelnetProtocol extends ServerProtocol
 
     /**
      * @param Connection $connection
-     * @param string $command
+     * @param string $query
      * @return false|string
      */
     public function executeCommand(
         Connection $connection,
-        string $command
+        string $query
     ): string {
-        $client  = $connection->client();
-
-        if ($command === '\\info') {
-            $this->info($connection);
-            return '';
-        }
-
-        if ($command === '\\exit') {
-            if ($this->password !== null) {
-                $this->protect = true;
-            }
-            $connection->closeConnect();
-            return 'Closed session';
-        }
-
-        if ($command === '\\users') {
-            return $this->usersInfo($connection->getAllConnections());
-        }
-
-        if (strpos($command, '\\kick') === 0) {
-            list($command, $clientId) = explode(' ', $command);
-            $connection->kickConnect($clientId);
-            return "User {$clientId} kicked";
-        }
-
-        if (strpos($command, '\\change_pass') === 0) {
-            $commandList = explode(' ', $command);
-            $oldPass = $commandList[1];
-            $newPass = $commandList[2] ?? null;
-            if ($this->password === null) {
-                $this->password = $oldPass;
-            } else if ($this->password === $oldPass) {
-                $this->password = $newPass;
-            }
-
-            $this->config->setOrOverwrite('password', $this->password);
-            $this->loadConfigFile();
-
-            return "Password change";
-        }
-
         if ($this->protect === true) {
             return '';
         }
 
-        if (empty($command)) {
+        if (empty($query)) {
             return '';
         }
 
-        $action = $this->searchCommandCorrect(
-            $this->actions,
-            $command
+        $result = $this->terminalCommandExtend(
+            $connection,
+            $query,
+            $this->config
         );
 
-        if ($action === null) {
+        if ($result !== null) {
+            return $result;
+        }
+
+        $rpcCommand = $this->searchCommandCorrect(
+            $this->rpcCommands,
+            $query
+        );
+
+        if ($rpcCommand === null) {
             return 'Not found';
         }
 
-        return $action->__invoke($client, $command);
+        return $rpcCommand->terminal($connection, $query);
     }
 
+    /**
+     * @param RpcCommand[] $rpcCommands
+     * @param string $query
+     * @return null|RpcCommand
+     */
     private function searchCommandCorrect(
-        array $actions,
-        string $command
-    ): ?Command {
-        foreach ($actions as $action) {
-            if ($action->matchData($command)) {
-                return $action;
+        array $rpcCommands,
+        string $query
+    ): ?RpcCommand {
+        foreach ($rpcCommands as $rpcCommand) {
+            if ($rpcCommand->terminalMatchCommand($query)) {
+                return $rpcCommand;
             }
         }
 

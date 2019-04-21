@@ -6,7 +6,6 @@ use Exception;
 use Kraken\Ipc\Socket\SocketInterface;
 use Kraken\Ipc\Socket\SocketListener;
 use SocketServer\Connection;
-use SocketServer\Listener;
 use SocketServer\ServerProtocol;
 
 class JsonRpcProtocol extends ServerProtocol
@@ -43,18 +42,19 @@ class JsonRpcProtocol extends ServerProtocol
         Connection $connection,
         string $data
     ): string {
-        $client = $connection->client();
-
         $jsonRpcRequest = JsonRpcRequest::buildFromRequest($data);
-        $params = $jsonRpcRequest->params();
 
         $this->validateMethod($jsonRpcRequest);
-        $command = $this->actions[$jsonRpcRequest->method()];
+        $rpcClass = $this->rpcCommands[$jsonRpcRequest->method()];
+
+        /** @var RpcCommand $rpcCommand */
+        $rpcCommand = new $rpcClass();
+        $result = $rpcCommand->rpcJson($connection, $jsonRpcRequest);
 
         return json_encode([
             'jsonrpc' => '2.0',
             'id' => $jsonRpcRequest->id(),
-            'result' => (new $command())->__invoke($client, ... $params)
+            'result' => $result,
         ]);
     }
 
@@ -75,7 +75,7 @@ class JsonRpcProtocol extends ServerProtocol
             );
         }
 
-        if (empty($this->actions[$jsonRpcRequest->method()])) {
+        if (empty($this->rpcCommands[$jsonRpcRequest->method()])) {
             throw new \Exception(
                 json_encode([
                     'jsonrpc' => $jsonRpcRequest->version(),

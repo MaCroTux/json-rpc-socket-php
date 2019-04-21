@@ -21,7 +21,7 @@ class Server
         $this->sockets[$socket->port()] = $socket;
     }
 
-    public static function buildFromProtocolAndPort(
+    public static function buildCustomServerFromProtocolAndPort(
         ServerProtocol $protocol,
         int $port,
         string $address = '0.0.0.0'
@@ -43,7 +43,7 @@ class Server
      * @param int $port
      * @throws \Exception
      */
-    public function addProtocolAndPort(
+    public function addCustomServerWithProtocolAndPort(
         ServerProtocol $protocol,
         int $port,
         string $address = '0.0.0.0'
