@@ -7,7 +7,9 @@
     },
     "autoload": {
         "psr-4": {
-            "SocketServer\\": "src/"
+            "SocketServer\\": "src/",
+            "Custom\\": "example/TelnetCustomServer/",
+            "Example\\": "example/"
         }
     }
 }

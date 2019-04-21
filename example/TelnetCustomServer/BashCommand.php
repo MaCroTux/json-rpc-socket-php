@@ -1,6 +1,6 @@
 <?php
 
-namespace SocketServer\TelnetCommand;
+namespace Custom;
 
 use Kraken\Ipc\Socket\SocketInterface;
 use SocketServer\Command;
@@ -54,5 +54,10 @@ class BashCommand implements Command
     public function methodName(): string
     {
         return '.';
+    }
+
+    public function description(): string
+    {
+        return 'Bash command utilities, type .h';
     }
 }
